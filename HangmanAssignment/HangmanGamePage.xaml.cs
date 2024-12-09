@@ -5,7 +5,8 @@ namespace HangmanAssignment
 {
     public partial class HangmanGamePage : ContentPage
     {
-        private string _wordToGuess = "CORRECTGUESS"; // The word to guess
+        private readonly string[] _wordsToGuess = { "TYPESCRIPT", "PYTHON", "JAVASCRIPT" }; // The words to guess
+        private int _currentWordIndex = 0; // Index to track which word is being guessed
         private char[] _currentGuess; // The current guessed word (with blanks)
         private int _wrongGuesses = 0; // Count of incorrect guesses
         private HashSet<char> _usedLetters = new(); // Track guessed letters
@@ -18,8 +19,9 @@ namespace HangmanAssignment
 
         private void InitializeGame()
         {
-            // Reset game state
-            _currentGuess = new string('_', _wordToGuess.Length).ToCharArray();
+            // Reset game state for the current word
+            string currentWord = _wordsToGuess[_currentWordIndex];
+            _currentGuess = new string('_', currentWord.Length).ToCharArray();
             _wrongGuesses = 0;
             _usedLetters.Clear();
 
@@ -67,12 +69,13 @@ namespace HangmanAssignment
             _usedLetters.Add(guessedChar);
 
             // Process the guess
-            if (_wordToGuess.Contains(guessedChar))
+            string currentWord = _wordsToGuess[_currentWordIndex];
+            if (currentWord.Contains(guessedChar))
             {
                 // Correct guess
-                for (int i = 0; i < _wordToGuess.Length; i++)
+                for (int i = 0; i < currentWord.Length; i++)
                 {
-                    if (_wordToGuess[i] == guessedChar)
+                    if (currentWord[i] == guessedChar)
                     {
                         _currentGuess[i] = guessedChar;
                     }
@@ -80,11 +83,23 @@ namespace HangmanAssignment
 
                 UpdateWordLabel();
 
-                // Check if the player has won
-                if (new string(_currentGuess) == _wordToGuess)
+                // Check if the player has guessed the current word
+                if (new string(_currentGuess) == currentWord)
                 {
-                    DisplayAlert("Congratulations!", "You guessed the word!", "Play Again");
-                    InitializeGame();
+                    DisplayAlert("Congratulations!", $"You guessed the word: {currentWord}!", "Next Word");
+
+                    // Move to the next word or restart if all words are guessed
+                    _currentWordIndex++;
+                    if (_currentWordIndex < _wordsToGuess.Length)
+                    {
+                        InitializeGame();
+                    }
+                    else
+                    {
+                        DisplayAlert("Congratulations!", "You guessed all the words and Survived!", "Play Again");
+                        _currentWordIndex = 0; // Reset for a new game
+                        InitializeGame();
+                    }
                 }
             }
             else
@@ -96,7 +111,8 @@ namespace HangmanAssignment
                 // Check if the player has lost
                 if (_wrongGuesses == 6) // Assuming 6 is the max incorrect guesses
                 {
-                    DisplayAlert("Game Over", $"The word was {_wordToGuess}. Try again!", "Restart");
+                    DisplayAlert("Game Over, and You Died", $"The word was {currentWord}. Try again!", "Restart");
+                    _currentWordIndex = 0; // Reset to the first word
                     InitializeGame();
                 }
             }
